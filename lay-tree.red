@@ -3,7 +3,7 @@ Red [
 	Date: 2018-09-22
 	Last: 2018-09-28
 ]
-#include %../drawing/pallette1.red
+#include %../drawing/pallette1.red ; https://raw.githubusercontent.com/toomasv/diager/master/pallette.red
 context [
 	cf: sz: wz: _new: typ: name: fc: fc2: none ; win: 
 	i: 0
