@@ -1,15 +1,16 @@
 Red [
 	Author: "Toomas Vooglaid"
 	Date: 2018-09-22
-	Last: 2018-09-28
+	Last: 2018-09-29
 ]
-#include %../drawing/pallette1.red ; https://raw.githubusercontent.com/toomasv/diager/master/pallette.red
+#include %../drawing/pallette1.red ; ; https://raw.githubusercontent.com/toomasv/diager/master/pallette.red
 context [
-	cf: sz: wz: _new: typ: name: fc: fc2: none ; win: 
+	sz: wz: _new: typ: name: fc: fc2: none ; win: 
+	cf: .5
+	gr: 10
 	i: 0
 	sc: system/view/screens/1
 	facename: make map! 10
-	drag: [drag-on: 'down]
 	short-text: function [title-text /with def][
 		view/flags [
 			title title-text 
@@ -44,44 +45,60 @@ context [
 		either string? result [result][copy ""]
 	]
 	ask-long-text: does [long-text "Enter text"]
-	make-mobile: func [lay][
+	make-mobile: func [lay /local body][
 		case/all [
 			not lay/actors [lay/actors: object copy []]
-			not attempt [lay/actors/on-moving] [lay/actors: make lay/actors [on-moving: func [face event][]]]
-			not attempt [lay/actors/on-resizing] [lay/actors: make lay/actors [on-resizing: func [face event][]]]
+			not attempt [:lay/actors/on-moving] [lay/actors: make lay/actors [on-moving: func [face event][]]]
 		]
-		lay/flags: [resize]
 		lay/extra: #(offset: 0x0 size: 0x0)
-		append body-of :lay/actors/on-moving bind compose [face/extra/offset: (cf) * face/offset] :lay/actors/on-moving
-		append body-of :lay/actors/on-resizing bind compose [face/extra/size: (cf) * face/size] :lay/actors/on-resizing
+		append body: body-of :lay/actors/on-moving bind [face/extra/offset: cf * face/offset] :lay/actors/on-moving
+	]
+	make-mobile2: func [lay /local body found][
+		append body-of :lay/actors/on-moving bind [face/extra/offset: cf * face/offset] :lay/actors/on-moving
+		body: body-of :lay/extra/actors/on-over
+		insert at body/3/4 10 bind [face/text: form face/extra/offset: face/offset / cf] :lay/extra/actors/on-over
+	]
+	make-static: function [lay /local found body][
+		if attempt/safer [body: body-of :lay/extra/actors/on-over] [
+			if found: find/only body/3/4 to-set-path 'face/text [change/part found [] 6]
+		]
+		if attempt/safer [:lay/actors/on-moving] [
+			if found: find/only body-of :lay/actors/on-moving to-set-path 'face/extra/offset [
+				change/part found [] 4
+			]
+		]
+	]
+	resize: func [face cf /local pane][
+		face/size: cf * face/extra/size
+		face/type face/draw
+		face/draw/9: (face/draw/5: face/draw/10: face/size - 1) - 4
+		unless face/extra/type = 'window [face/offset: cf * face/extra/offset]
+		if face/extra/pane [foreach pane face/pane [resize pane cf]]
 	]
 	face-data: [
-		;panel [
-			style fld: field extra false on-change [face/extra: true]
-			style are: area 200x75 extra false on-change [face/extra: true]
-			text "type: " type_: fld (form type) disabled return
-			text "offset: " offset_: fld (form offset) return
-			text "size: " size_: fld (form size) return
-			text "text: " text_: fld 200x26 (form any [text ""]) return
-			;text "image: " image_: button "Select" [] return   ; TBD
-			text "color: " color_: fld (form any [color ""]) return
-			text "menu: " menu_: are (either menu [mold/only menu][""]) return
-			text "data: " data_: fld 200x26 (either data [mold/only data][""]) return
-			text "enabled?: " enabled?_: check (enabled?) extra false return
-			text "visible?: " visible?_: check (visible?) extra false return
-			text "selected: " selected_: fld (form any [selected ""]) return
-			text "flags: " flags_: fld 200x26 (either flags [mold/only flags][""]) return
-			text "options: " options_: fld 200x26 (either options [mold/only options][""]) return ;[style: base vid-align: top at-offset: none]
-			;parent ;make object! [...]
-			;pane
-			text "rate: " rate_: fld (form any [rate ""]) return
-			text "para: " para_: fld 200x26 (either para [mold/only para][""]) return
-			text "font: " font_: fld 200x26 (either font [mold/only font][""]) return
-			text "actors: " actors_: are wrap (either actors [mold/only actors][""]) return
-			text "draw: " draw_: are wrap (either draw [mold/only draw][""]) return
-		;]
+		style fld: field extra false on-change [face/extra: true]
+		style are: area 200x75 extra false on-change [face/extra: true]
+		text "type: " type_: fld (form type) disabled return
+		text "offset: " offset_: fld (form offset) return
+		text "size: " size_: fld (form size) return
+		text "text: " text_: fld 200x26 (form any [text ""]) return
+		;text "image: " image_: button "Select" [] return   ; TBD
+		text "color: " color_: fld (form any [color ""]) return
+		text "menu: " menu_: are (either menu [mold/only menu][""]) return
+		text "data: " data_: fld 200x26 (either data [mold/only data][""]) return
+		text "enabled?: " enabled?_: check (enabled?) extra false on-change [face/extra: true] return
+		text "visible?: " visible?_: check (visible?) extra false on-change [face/extra: true] return
+		text "selected: " selected_: fld (form any [selected ""]) return
+		;text "flags: " flags_: fld 200x26 (either flags [mold/only flags][""]) return
+		;text "options: " options_: fld 200x26 (either options [mold/only options][""]) return ;[style: base vid-align: top at-offset: none]
+		;---parent ;make object! [...]
+		;---pane
+		text "rate: " rate_: fld (form any [rate ""]) return
+		;text "para: " para_: fld 200x26 (either para [mold/only para][""]) return  ;??
+		;text "font: " font_: fld 200x26 (either font [mold/only font][""]) return  ;??
+		;text "actors: " actors_: are wrap (either actors [mold/only actors][""]) return
+		text "draw: " draw_: are wrap (either draw [mold/only draw][""]) return
 		button "Change" [
-			;_face: (probe my-face/type my-face)
 			foreach [txt fld] face/parent/pane [
 				if fld/extra [
 					attr: to-word copy/part txt/text find txt/text #":"
@@ -93,15 +110,22 @@ context [
 							extra/size: cf * extra/extra/size: fld/data
 							extra/draw/9: (extra/draw/5: extra/draw/10: extra/size - 1) - 4
 						]
-					][extra/extra/:attr: compose bind load fld/text extra/extra]
+						color [extra/extra/color: either word? val: fld/data [get val][val]]
+						enabled? visible? [extra/extra/:attr: fld/data]
+						;font [extra/font: make ]
+						;para [extra/extra/para: make para! load fld/text extra/extra/para/parent: append copy [] extra/extra]
+					][
+						val: load fld/text 
+						extra/extra/:attr: either all [block? val empty? val][none][val]
+					]
 				]
 			]
 		] 
 		button "Close" [unview]
 	]
 	new-face: [
-		type: 'base ;(to-lit-word typ) 
-		color: switch/default lay/type [window [white] panel tab-panel group-box base [snow]][silver]
+		type: 'base 
+		color: switch/default lay/type [window [white] panel tab-panel group-box base [snow]][silver] ; NB! Turns color dark if pallette is closed without selecting color
 		offset: either lay/offset [cf * lay/offset][none]
 		size: cf * lay/size
 		text: form name 
@@ -117,9 +141,9 @@ context [
 				"Size" 		_size
 				"Color" 	_color
 				"Menu" 		_menu
-				"Data" 		_data 	;------v TBD
-				"Disable" 	_disable
-				"Hide" 		_hide
+				"Data" 		_data
+				"Disable" 	_disable 
+				"Hide" 		_hide 
 				"Selected" 	_selected
 				"Flags" 	_flags
 				"Options" 	_options
@@ -163,40 +187,44 @@ context [
 				"Front" front
 			]
 			"Cut" _cut
-			"Copy" _copy ;TBD
+			;"Copy" _copy ;TBD
 			(if find [window panel group-box base] lay/type [["Paste" _paste]])
 			"Delete" _delete
 		]
 		actors: object [
-			pos: lay: ofs: diff: change-size: none
+			pos: lay: ofs: diff: change-size: txt: none
 			on-down: func [face event][
 				pos: event/offset
-				if event/ctrl? [pos: round/to pos 5]
+				if event/ctrl? [pos: round/to pos gr * cf]
+				txt: copy face/text
 				either change-size: either within? event/offset face/size - 7 8x8 [yes][no] [
 					diff: face/size - event/offset
+					face/text: form face/extra/size
 				][
 					ofs: face/offset
+					face/text: form face/extra/offset
 				]
 				'done
 			]
 			on-over: func [face event][
 				if event/down? [
 					either change-size [
-						face/size: either event/ctrl? [round/to event/offset + diff 5][event/offset + diff]
+						face/size: either event/ctrl? [round/to event/offset + diff gr * cf][event/offset + diff]
 						face/draw/9: (face/draw/5: face/draw/10: face/size - 1) - 4
-						face/extra/size: face/size / cf
+						face/text: form face/extra/size: face/size / cf
 					][
 						df: event/offset - pos
-						face/offset: either event/ctrl? [round/to ofs + df 5][ofs + df]
-						face/extra/offset: face/offset / cf
+						face/offset: either event/ctrl? [round/to ofs + df gr * cf][ofs + df]
+						face/text: form face/extra/offset: face/offset / cf
 						ofs: face/offset
 					]
 				]
 				'done
 			]
+			on-up: func [face event][face/text: txt]
 			on-menu: func [face event /local actor code][
 				pos: event/offset
-				if event/ctrl? [pos: round/to pos 5]
+				if event/ctrl? [pos: round/to pos cf * gr]
 				switch event/picked [
 					_face [
 						view/flags/options compose bind copy/deep face-data :face/extra [resize][
@@ -223,10 +251,29 @@ context [
 						face/extra/size: load short-text/with "Edit size" form face/extra/size 
 						face/draw/5: (face/size: face/extra/size * cf) - 1 'done
 					] 
-					_color [face/extra/color: get select-color 'done]
+					_color [face/extra/color: either word? color: select-color/with face/extra/color [get color][color] 'done]
 					_text [face/extra/text: short-text/with "Enter text" face/extra/text 'done]
 					_menu [face/extra/menu: load short-text/with "Enter menu" mold/only face/extra/menu 'done]
 					_data [face/extra/data: load long-text/with "Enter data" mold/only face/extra/data 'done]
+					_disable [face/extra/enabled?: no change/part at face/menu/2 15 ["Enable" _enable] 2 'done]
+					_enable [face/extra/enabled?: yes change/part at face/menu/2 15 ["Disable" _disable] 2 'done]
+					_hide [
+						face/extra/visible?: no change/part at face/menu/2 17 ["Show" _show] 2
+						face/color: 255.240.240
+						'done
+					]
+					_show [
+						face/extra/visible?: yes change/part at face/menu/2 17 ["Hide" _hide] 2 
+						face/color: switch/default face/extra/type [window [white] panel tab-panel group-box base [snow]][silver]
+						'done
+					]
+					_selected [face/extra/selected: load short-text/with "Enter selected" form face/extra/selected 'done]
+					;_flags [face/extra/flags: load long-text/with "Enter flags" mold/only face/extra/flags 'done]
+					;_options [face/extra/options: load long-text/with "Enter options" mold/only face/extra/options 'done]
+					_rate [face/extra/rate: load short-text/with "Enter rate" form face/extra/rate 'done]
+					;_para [face/extra/para: load long-text/with "Enter para spec" mold/only face/extra/para 'done]
+					;_font [face/extra/font: load long-text/with "Enter font spec" mold/only face/extra/font 'done]
+					_draw [face/extra/draw: load long-text/with "Enter draw commands" mold/only face/extra/draw 'done]
 
 					on-time on-scroll on-down on-up on-mid-down on-mid-up on-alt-down on-alt-up on-aux-down on-aux-up on-wheel 
 					on-drag-start on-drag on-drop on-click on-dbl-click on-over on-key on-key-down on-key-up on-focus on-unfocus 
@@ -247,12 +294,11 @@ context [
 							load long-text/with "Enter actor's code" mold/only code 
 							:face/extra/actors/:actor
 
-						;if find [resize resizing] actor [
-						;	face/extra/flags: [resize]
-						;	if actor = 'resizing [
-						;		append body-of :face/extra/actors/on-resizing bind compose [face/extra/size: (cf) * face/size] :face/extra/actors/on-resizing
-						;	]
-						;]
+						if find [resize resizing] actor [
+							face/extra/flags: [resize]
+							append body-of :face/extra/actors/(event/picked) 
+									bind [face/extra/size: cf * face/size] :face/extra/actors/(event/picked)
+						]
 						'done
 					]
 
@@ -333,18 +379,77 @@ context [
 			]
 		]
 	]
-	set 'lay-tree func [lay  /with pa /local new window?][
+	set 'lay-tree func [lay /with pa /local new window?][
 		either block? lay [
 			forall lay [lay-tree/with lay/1 pa]
 		][
 			if window?: lay/type = 'window [
 				sz: sc/size 
-				cf: .5
+				cf: .5 gr: 10
 				pa: win: make face! copy [
 					type: 'window 
 					offset: 5x35 
 					size: cf * sz 
 					pane: copy [] 
+					flags: [resize]
+					menu: [
+						"File" ["Open" open "Save" save] ; TBD
+						"Options" ["Absolute" absolute "Scale" scale]
+					]
+					actors: object [
+						on-menu: func [face event][
+							switch event/picked [
+								absolute [
+									cf: 1 gr: 5
+									foreach-face win [
+										switch face/extra/type [
+											screen []
+											window [
+												make-static :face/extra 
+												change/part win/menu/4 ["Proportional" proportional] 2
+												resize face cf
+											]
+										]
+									]
+								]
+								proportional [
+									cf: .5 gr: 10
+									foreach-face win [
+										switch face/extra/type [
+											screen []
+											window [
+												make-mobile2 :face/extra 
+												change/part win/menu/4 ["Absolute" absolute] 2
+												resize face cf
+											]
+										]
+									]
+								]
+								scale [
+									cf: load short-text/with "Enter scale" form cf
+									foreach-face win [
+										switch face/extra/type [
+											screen []
+											window [
+												change/part win/menu/4 ["Absolute" absolute] 2
+												resize face cf
+											]
+										]
+									]
+								]
+							]
+						]
+						on-resize: func [face event][
+							if win/menu/4/2 = 'absolute [
+								cf: 1.0 * face/size/x / sc/size/x
+								foreach-face win [
+									switch face/extra/type [
+										window [resize face cf]
+									]
+								]
+							]
+						]
+					]
 				]
 				append win/pane make face! [
 					type: 'base 
@@ -373,16 +478,26 @@ context [
 			if window?: lay/type = 'window [make-mobile :lay]
 			name: load rejoin [lay/type facename/(lay/type): 1 + any [facename/(lay/type) 0]]
 			append pa/pane new: make face! bind compose new-face :lay-tree
-			;if pa/extra/type = 'tab-panel
 			set name lay
 			lay/extra: new
 			if lay/pane [foreach l lay/pane [lay-tree/with l new]]
-			if window? [win/visible?: yes lay/visible?: yes do-events] ;lo: lay 
+			if window? [
+				if attempt/safer [
+					not empty? acts: intersect [on-resize on-resizing] words-of :lay/actors
+				][
+					foreach act acts [
+						append body-of :lay/actors/:act 
+							bind [
+								face/extra/size: cf * face/size
+								face/extra/draw/9: (face/extra/draw/5: face/extra/draw/10: face/extra/size - 1) - 4
+							] :lay/actors/:act
+					]
+				]
+				win/visible?: yes lay/visible?: yes do-events
+			] ;lo: lay 
 		]
 	]
 ]
 comment [
-  ; Some examples
-  lay-tree layout [size 800x600]
-	lay-tree layout [below panel [text 40 "Probe" field 250] box 300x300 white]
+	lay-tree lay: layout [below panel [text 40 "Probe" field 250] box 300x300 white]
 ]
