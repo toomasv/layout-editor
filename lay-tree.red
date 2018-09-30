@@ -70,7 +70,7 @@ context [
 	]
 	resize: func [face cf /local pane][
 		face/size: cf * face/extra/size
-		face/type face/draw
+		;face/type face/draw
 		face/draw/9: (face/draw/5: face/draw/10: face/size - 1) - 4
 		unless face/extra/type = 'window [face/offset: cf * face/extra/offset]
 		if face/extra/pane [foreach pane face/pane [resize pane cf]]
