@@ -681,5 +681,7 @@ context [
 	]
 ]
 comment [
-	lay-tree lay: layout [below panel [text 40 "Probe" field 250] box 300x300 white]
+	live-edit
+	live-edit [size 400x400] ; ... some VID 
+	live-edit %file.red ; previously saved from live-edit session
 ]
