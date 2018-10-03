@@ -10,7 +10,7 @@ context [
 	gr: 10 ; Grid size
 	;i: 0
 	_body: copy [] ; Used in saving
-	faces: copy [] ; Register of name/face pairs
+	faces: copy [] ; Register of name/face pairs ;TBD
 	sc: system/view/screens/1
 	facename: make map! 10 ; Register of face names
 	; Some helper funcs for asking values
