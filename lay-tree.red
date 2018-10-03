@@ -1,7 +1,7 @@
 Red [
 	Author: "Toomas Vooglaid"
 	Date: 2018-09-22
-	Last: 2018-10-02
+	Last: 2018-10-03
 ]
 #include %../drawing/pallette1.red ; ; https://raw.githubusercontent.com/toomasv/diager/master/pallette.red
 context [
@@ -85,8 +85,7 @@ context [
 	save-face: func [face file /local body pane][
 		collect/into [
 			foreach attr words-of face [
-				probe attr
-				if :face/:attr [probe attr
+				if :face/:attr [; probe attr
 					switch/default attr [
 						type [keep compose [
 							type: (to-lit-word get attr) ; Obligatory
@@ -541,7 +540,7 @@ context [
 						pane: copy [] 
 						flags: [resize]
 						menu: [
-							"File" ["Open" open "Save" save] ; TBD
+							"File" ["Open" open "Save as" save-as] ; TBD
 							"Options" ["Absolute" absolute "Scale" scale]
 						]
 						actors: object [
@@ -550,8 +549,8 @@ context [
 									open [
 										lay-tree/add-new/with do request-file win
 									]
-									save [
-										file: %tmp-lay.red
+									save-as [
+										file: request-file/save ;%tmp-lay.red
 										write file "Red []^/"
 										foreach-face/with win [
 											save-face face/extra file
@@ -672,7 +671,14 @@ context [
 		]
 	]
 	; Front func to create initial (empty) setting
-	set 'live-edit func [/source src][src: any [src layout []] lay-tree src]
+	set 'live-edit func [/source src][
+		src: any [src layout []] 
+		lay-tree switch type?/word src [
+			block! [layout src]
+			file! [do src]
+			object! [src]
+		]
+	]
 ]
 comment [
 	lay-tree lay: layout [below panel [text 40 "Probe" field 250] box 300x300 white]
