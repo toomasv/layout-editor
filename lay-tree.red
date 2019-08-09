@@ -519,7 +519,7 @@ context [
 	]
 	; `lay` is _original_, `pa` is its _shadow_ parent, `new` a new _shadow_ reflecting _original_
 	set 'lay-tree func [lay /with pa /add-new /local new window?][
-		facename: make map! 10
+		;facename: make map! 10
 		; If there are several elements
 		either block? lay [
 			forall lay [lay-tree/with lay/1 pa]
